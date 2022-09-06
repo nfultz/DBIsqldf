@@ -1,0 +1,83 @@
+
+R version 4.2.1 (2022-06-23) -- "Funny-Looking Kid"
+Copyright (C) 2022 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> library(DBIsqldf)
+> 
+> stopifnot(requireNamespace("RSQLite"))
+Loading required namespace: RSQLite
+> options(sqldf.driver=quote(RSQLite::SQLite))
+> 
+> data(iris, envir=environment())
+> 
+> # head
+> sqldf("select * from iris limit 5")
+  Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+1          5.1         3.5          1.4         0.2  setosa
+2          4.9         3.0          1.4         0.2  setosa
+3          4.7         3.2          1.3         0.2  setosa
+4          4.6         3.1          1.5         0.2  setosa
+5          5.0         3.6          1.4         0.2  setosa
+> 
+> # Filter
+> sqldf("select * from iris where species = 'virginica' limit 5 ")
+  Sepal.Length Sepal.Width Petal.Length Petal.Width   Species
+1          6.3         3.3          6.0         2.5 virginica
+2          5.8         2.7          5.1         1.9 virginica
+3          7.1         3.0          5.9         2.1 virginica
+4          6.3         2.9          5.6         1.8 virginica
+5          6.5         3.0          5.8         2.2 virginica
+> 
+> # Parameterized query
+> sqldf("select * from iris where species = ? limit 5", "versicolor")
+  Sepal.Length Sepal.Width Petal.Length Petal.Width    Species
+1          7.0         3.2          4.7         1.4 versicolor
+2          6.4         3.2          4.5         1.5 versicolor
+3          6.9         3.1          4.9         1.5 versicolor
+4          5.5         2.3          4.0         1.3 versicolor
+5          6.5         2.8          4.6         1.5 versicolor
+> 
+> # Aggregate, quoting
+> sqldf('select species, avg("Petal.Width") from iris group by 1 limit 5')
+     Species avg("Petal.Width")
+1     setosa              0.246
+2 versicolor              1.326
+3  virginica              2.026
+> 
+> # Compare with aggregate(Petal.Width~Species, iris, FUN = var)
+> # CTE, back join
+> sqldf('
++   with tbl_width as (
++       select species, avg("Petal.Width") as xbar, count(1) as n
++       from iris
++       group by 1
++   )
++   select Species,
++   1.0/ (n-1) *sum(("Petal.Width" - xbar)*("Petal.Width" - xbar)) as var
++   from iris
++   join tbl_width using (species)
++   group by 1
++ ')
+     Species        var
+1     setosa 0.01110612
+2 versicolor 0.03910612
+3  virginica 0.07543265
+> 
+> proc.time()
+   user  system elapsed 
+  0.479   0.032   0.505 

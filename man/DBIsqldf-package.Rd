@@ -16,8 +16,9 @@ The primary differences are:
 \itemize{
 \item DBI interface only. This increases compatibility with database drivers, but at the expense
 of database-specific convenience features.
-\item DBI native parameterized query support
+\item DBI native parameterized query support.
 \item More conservative defaults for writing tables - data frames are imported as temporary tables
 and should be committed explicitly is they need to be persisted.
+\item No legacy (transitive) dependencies.
 }
 }
