@@ -1,0 +1,5 @@
+bibentry(bibtype = "Manual",
+         title = "sqldf: Manipulate R Data Frames Using SQL",
+         author = c(person("G.", "Grothendieck")),
+         year = "2017",
+         note = "Please cite the original sqldf package, not this fork.")

@@ -1,0 +1,18 @@
+Package: DBIsqldf
+Version: 0.9.9
+Date: 2022-09-06
+Title: Manipulate R Data Frames Using SQL
+Author: N. Fultz <nfultz@gmail.com> and G. Grothendieck <ggrothendieck@gmail.com>
+Maintainer: N. Fultz <nfultz@gmail.com>
+Description: sqldf() is a helper function to transparently initialize a 
+  database, imports data frames into it, and executes a query or other
+  statement. It supports all DBI drivers to some degree, and parameterized queries.
+ByteCompile: true
+Imports: DBI
+Suggests: RSQLite
+License: GPL-2
+BugReports: https://github.com/nfultz/DBIsqldf/issues
+URL: https://github.com/nfultz/DBIsqldf
+Roxygen: list(markdown = TRUE)
+Encoding: UTF-8
+RoxygenNote: 7.2.1
