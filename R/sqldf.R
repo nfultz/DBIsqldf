@@ -96,8 +96,9 @@
 #' # Manually managing the DB connection, and writing to a database
 #' if(requireNamespace("RSQLite")) {
 #'
-#'   conn <- DBI::dbConnect(RSQLite::SQLite(), tempfile())
+#'   conn <- DBI::dbConnect(RSQLite::SQLite(), tmp <- tempfile())
 #'   on.exit(DBI::dbDisconnect(conn), add=TRUE)
+#'   on.exit(file.remove(tmp), add=TRUE)
 #'
 #'   data(mtcars, envir=environment())
 #'
