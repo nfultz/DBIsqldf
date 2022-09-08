@@ -19,7 +19,7 @@
 #'
 #' ## Options
 #'
-#' `sqldf.driver`: A [DBIDriver-class] object for a transient database connection when `conn` is omitted,
+#' `sqldf.driver`: A [DBIDriver-class] (or cloneable [DBIConnection-class]) object for a transient database connection when `conn` is omitted,
 #' or an expression or function that yields one. The default is `quote(RSQLite::SQLite)`
 #'
 #' ## FAQ
@@ -53,14 +53,12 @@
 #' @param conn optional, a [DBIConnection-class] object.
 #' @param tx   optional, one of `'none'` (default), `'commit'`, or `'rollback'`.
 #'
+#' @returns A data frame of results if `statement` was a query, otherwise nothing.
 #' @examples
 #'
-#' library(DBIsqldf)
-#'
-#' if(!requireNamespace("RSQLite")) {
-#'   o <- options(sqldf.driver=quote(DBI::ANSI))
-#'   on.exit(options(o))
-#' }
+#' if(is.null(getOption("sqldf.driver")) && !requireNamespace("RSQLite", quietly=TRUE)) {
+#'   message("Please configure `options(sqldf.driver)` or install RSQLite to run below examples.")
+#' } else {
 #'
 #' data(iris, envir=environment())
 #'
@@ -85,40 +83,42 @@
 #'       group by 1
 #'   )
 #'   select Species,
-#'   1.0/ (n-1) *sum(("Petal.Width" - xbar)*("Petal.Width" - xbar)) as var
+#'   1.0/(n-1) * sum(("Petal.Width" - xbar)*("Petal.Width" - xbar)) as var
 #'   from iris
 #'   join tbl_width using (species)
 #'   group by 1
 #' ')
 #'
-#'
-#'
-#' # Manually managing the DB connection, and writing to a database
-#' if(requireNamespace("RSQLite")) {
-#'
-#'   conn <- DBI::dbConnect(RSQLite::SQLite(), tmp <- tempfile())
-#'   on.exit(DBI::dbDisconnect(conn), add=TRUE)
-#'   on.exit(file.remove(tmp), add=TRUE)
-#'
-#'   data(mtcars, envir=environment())
-#'
-#'   sqldf("create table usacars as select * from mtcars where am = 1", conn=conn, tx='commit')
-#'
-#'   #Now compare
-#'   DBI::dbListTables(conn)
-#'
-#'   # vs persisted tables
-#'   sqldf("SELECT type, name FROM sqlite_schema", conn=conn)
-#'
-#'   # hang up and reconnect
-#'   DBI::dbDisconnect(conn)
-#'   conn <- DBI::dbConnect(conn)
-#'
-#'   DBI::dbListTables(conn)
-#'
-#'   sqldf("SELECT cyl, count(1) as n from usacars group by 1", conn=conn)
 #' }
 #'
+#' if(!requireNamespace("RSQLite", quietly=TRUE)) {
+#'   message("Below examples require RSQLite specifically.")
+#' } else {
+#'
+#' # Manually managing the DB connection, and writing to a database
+#' conn <- DBI::dbConnect(RSQLite::SQLite(), tempfile())
+#'
+#' data(mtcars, envir=environment())
+#'
+#' sqldf("create table usacars as select * from mtcars where am = 1", conn=conn, tx='commit')
+#'
+#' #Now compare
+#' DBI::dbListTables(conn)
+#'
+#' # vs persisted tables
+#' sqldf("SELECT type, name FROM sqlite_schema", conn=conn)
+#'
+#' # hang up and reconnect
+#' DBI::dbDisconnect(conn)
+#' conn <- DBI::dbConnect(conn)
+#'
+#' DBI::dbListTables(conn)
+#'
+#' sqldf("SELECT cyl, count(1) as n from usacars group by 1", conn=conn)
+#'
+#' DBI::dbDisconnect(conn)
+#'
+#' }
 #'
 sqldf <- function(statement, ..., conn, tx) {
 

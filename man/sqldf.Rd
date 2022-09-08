@@ -15,6 +15,9 @@ sqldf(statement, ..., conn, tx)
 
 \item{tx}{optional, one of \code{'none'} (default), \code{'commit'}, or \code{'rollback'}.}
 }
+\value{
+A data frame of results if \code{statement} was a query, otherwise nothing.
+}
 \description{
 sqldf is an R package for running SQL statements on R data frames, optimized for convenience.
 The user simply specifies an SQL statement in R using data frame names in place of table
@@ -33,7 +36,7 @@ All \code{DBI} drivers are supported, although features may be limited by driver
 \code{DBIsqldf} is free software published under the GNU General Public License that can be downloaded from CRAN.
 \subsection{Options}{
 
-\code{sqldf.driver}: A \linkS4class{DBIDriver} object for a transient database connection when \code{conn} is omitted,
+\code{sqldf.driver}: A \linkS4class{DBIDriver} (or cloneable \linkS4class{DBIConnection}) object for a transient database connection when \code{conn} is omitted,
 or an expression or function that yields one. The default is \code{quote(RSQLite::SQLite)}
 }
 
@@ -62,12 +65,9 @@ Calculations performed within the database will follow the database's rules.
 }
 \examples{
 
-library(DBIsqldf)
-
-if(!requireNamespace("RSQLite")) {
-  o <- options(sqldf.driver=quote(DBI::ANSI))
-  on.exit(options(o))
-}
+if(is.null(getOption("sqldf.driver")) && !requireNamespace("RSQLite", quietly=TRUE)) {
+  message("Please configure `options(sqldf.driver)` or install RSQLite to run below examples.")
+} else {
 
 data(iris, envir=environment())
 
@@ -92,39 +92,41 @@ sqldf('
       group by 1
   )
   select Species,
-  1.0/ (n-1) *sum(("Petal.Width" - xbar)*("Petal.Width" - xbar)) as var
+  1.0/(n-1) * sum(("Petal.Width" - xbar)*("Petal.Width" - xbar)) as var
   from iris
   join tbl_width using (species)
   group by 1
 ')
 
-
-
-# Manually managing the DB connection, and writing to a database
-if(requireNamespace("RSQLite")) {
-
-  conn <- DBI::dbConnect(RSQLite::SQLite(), tmp <- tempfile())
-  on.exit(DBI::dbDisconnect(conn), add=TRUE)
-  on.exit(file.remove(tmp), add=TRUE)
-
-  data(mtcars, envir=environment())
-
-  sqldf("create table usacars as select * from mtcars where am = 1", conn=conn, tx='commit')
-
-  #Now compare
-  DBI::dbListTables(conn)
-
-  # vs persisted tables
-  sqldf("SELECT type, name FROM sqlite_schema", conn=conn)
-
-  # hang up and reconnect
-  DBI::dbDisconnect(conn)
-  conn <- DBI::dbConnect(conn)
-
-  DBI::dbListTables(conn)
-
-  sqldf("SELECT cyl, count(1) as n from usacars group by 1", conn=conn)
 }
 
+if(!requireNamespace("RSQLite", quietly=TRUE)) {
+  message("Below examples require RSQLite specifically.")
+} else {
+
+# Manually managing the DB connection, and writing to a database
+conn <- DBI::dbConnect(RSQLite::SQLite(), tempfile())
+
+data(mtcars, envir=environment())
+
+sqldf("create table usacars as select * from mtcars where am = 1", conn=conn, tx='commit')
+
+#Now compare
+DBI::dbListTables(conn)
+
+# vs persisted tables
+sqldf("SELECT type, name FROM sqlite_schema", conn=conn)
+
+# hang up and reconnect
+DBI::dbDisconnect(conn)
+conn <- DBI::dbConnect(conn)
+
+DBI::dbListTables(conn)
+
+sqldf("SELECT cyl, count(1) as n from usacars group by 1", conn=conn)
+
+DBI::dbDisconnect(conn)
+
+}
 
 }

@@ -1,5 +1,5 @@
 Package: DBIsqldf
-Version: 0.9.9-1
+Version: 0.9.9-2
 Date: 2022-09-07
 Title: Manipulate R Data Frames Using SQL
 Author: Neal Fultz <nfultz@gmail.com> and G. Grothendieck <ggrothendieck@gmail.com>
